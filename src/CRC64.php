@@ -7,9 +7,9 @@ namespace Keyndin\Crc64;
  */
 class CRC64
 {
-    /** @var Format */
+    /** @var string */
     private $format = Format::HEX;
-    /** @var Polynomial */
+    /** @var string */
     private $polynomial = Polynomial::ISO;
     /** @var Long[][] */
     private  $table = null;
@@ -17,7 +17,9 @@ class CRC64
     private $value = null;
     /** @var ?int[] */
     private $bytes = null;
+    /** @var bool */
     private $invertIn = true;
+    /** @var bool */
     private $invertOut = true;
 
     /**
@@ -34,7 +36,7 @@ class CRC64
      * @param int $polynomial
      * @return self
      */
-    public function setPolynomial(int $polynomial): self
+    public function setPolynomial(string $polynomial): self
     {
         $this->polynomial = $polynomial;
         return $this;
@@ -107,7 +109,6 @@ class CRC64
         }
 
         while ($len > 0) {
-            $x = $this->value->toInt();
             $off = $this->value->xor($this->bytes[$idx])->and(0xff)->toInt();
             $this->value = $this->table[0][$off]->xor($this->value->rshift(8));
             $idx++;

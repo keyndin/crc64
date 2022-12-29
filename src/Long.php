@@ -4,7 +4,7 @@ namespace Keyndin\Crc64;
 
 use InvalidArgumentException;
 
-class Long
+final class Long
 {
     private static $exp = 64;
     /* @var bool[] */
