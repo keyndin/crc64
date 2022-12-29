@@ -153,10 +153,10 @@ class Long
      */
     public function lshift(int $val): Long
     {
-        // TODO: rework this!
+        $val = 0x3F & $val;
         for ($i = self::$exp - 1; $i >= 0; $i--) {
-            $n = $i - $val >= 0 ? $i - $val : $i - ($val % 63) + 64;
-            $this->value[$i] = $this->value[$n];
+            $n = $i - $val;
+            $this->value[$i] = $n >= 0 && $this->value[$n];
         }
         return $this;
     }
@@ -169,13 +169,10 @@ class Long
      */
     public function rshift(int $val): Long
     {
-        // TODO: rework this!
+        $val = 0x3F & $val;
         for ($i = 0; $i < self::$exp; $i++) {
-            if (($n = $i + $val) < self::$exp) {
-                $this->value[$i] = $this->value[$n];
-            } else {
-                $this->value[$i] = false;
-            }
+            $n = $i + $val;
+            $this->value[$i] = $n <= self::$exp -1 && $this->value[$n];
         }
         return $this;
     }
@@ -205,6 +202,7 @@ class Long
 
     /**
      * New Long from string value
+     * TODO: Rework this! Lshift by one byte per character?
      *
      * @param string $val
      * @return static
@@ -225,12 +223,12 @@ class Long
      */
     protected static function getFromType($val): self
     {
-        if (is_int($val)) return Long::fromInt($val);
+        if (is_int($val) || is_numeric($val)) return Long::fromInt(intval($val));
         if (is_string($val)) return Long::fromString($val);
         if ($val::class === 'Keyndin\Crc64\Long') return $val;
         throw new InvalidArgumentException(sprintf(
             'Unsupported Datatype conversion, expecting value to be of 
-            either `string`, `int` or `Keyndin\Crc64\Long`, got %s',
+            either `string`, `int` or `Keyndin\Crc64\Long`, received %s instead.',
             $val::class));
     }
 

@@ -42,16 +42,20 @@ class LongTest extends TestCase
 
     public static function testLshift(): void
     {
-//        self::assertEquals(20, Long::fromInt(5)->lshift(2)->toInt());
-//        self::assertEquals(7936, Long::fromInt(31)->lshift(8)->toInt());
+        self::assertEquals(20, Long::fromInt(5)->lshift(2)->toInt());
+        self::assertEquals(7936, Long::fromInt(31)->lshift(8)->toInt());
         self::assertEquals(-467664896, Long::fromInt(-892)->lshift(19)->toInt());
-//        self::assertEquals(-2522015791327477760, Long::fromInt(221)->lshift(888)->toInt());
+        self::assertEquals(-2522015791327477760, Long::fromInt(221)->lshift(888)->toInt());
+        self::assertEquals(-9223372036854775808, Long::fromInt(1)->lshift(63)->toInt());
+        self::assertEquals(1, Long::fromInt(1)->lshift(64)->toInt());
     }
 
     public static function testRshift(): void
     {
         self::assertEquals(2, Long::fromInt(5)->rshift(1)->toInt());
         self::assertEquals(6, Long::fromInt(54)->rshift(3)->toInt());
+        self::assertEquals(0, Long::fromInt(1)->rshift(63)->toInt());
+        self::assertEquals(1, Long::fromInt(1)->rshift(64)->toInt());
     }
 
     public static function testAnd(): void
