@@ -6,9 +6,9 @@ use InvalidArgumentException;
 
 class Long
 {
-    private static int $exp = 64;
+    private static $exp = 64;
     /* @var bool[] */
-    private array $value = [];
+    private $value = [];
 
     protected function __construct()
     {
@@ -248,13 +248,13 @@ class Long
         }
         if (is_int($val)) return Long::fromInt(intval($val));
         if (is_string($val)) return Long::fromString($val);
-        if (gettype($val) === 'object' && $val::class === self::class) return $val;
+        if (gettype($val) === 'object' && get_class($val) === self::class) return $val;
         throw new InvalidArgumentException(
             sprintf(
                 'Unsupported Datatype conversion, expecting value to be of ' .
                 'either `string`, `int`, or `%s`, received `%s` instead.',
                 self::class,
-                gettype($val) != 'object' ? gettype($val) : $val::class
+                gettype($val) != 'object' ? gettype($val) : get_class($val)
             )
         );
     }
@@ -262,12 +262,12 @@ class Long
     /**
      * Return formatted Long number
      *
-     * @param Format $format
+     * @param string $format
      * @return string
      */
-    public function format(Format $format): string
+    public function format(string $format): string
     {
-        return sprintf($format->value, $this->toInt());
+        return sprintf($format, $this->toInt());
     }
 
     /**

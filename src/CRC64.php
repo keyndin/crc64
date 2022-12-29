@@ -2,25 +2,23 @@
 
 namespace Keyndin\Crc64;
 
-use JetBrains\PhpStorm\Pure;
-
 /**
  * Crc64 implementation in PHP
  */
 class CRC64
 {
     /** @var Format */
-    private Format $format = Format::HEX;
+    private $format = Format::HEX;
     /** @var Polynomial */
-    private Polynomial $polynomial = Polynomial::ISO;
+    private $polynomial = Polynomial::ISO;
     /** @var Long[][] */
-    private ?array $table = null;
+    private  $table = null;
     /** @var ?Long */
-    private ?Long $value = null;
+    private $value = null;
     /** @var ?int[] */
-    private ?array $bytes = null;
-    private bool $invertIn = true;
-    private bool $invertOut = true;
+    private $bytes = null;
+    private $invertIn = true;
+    private $invertOut = true;
 
     /**
      * @param Long $value
@@ -33,20 +31,20 @@ class CRC64
     }
 
     /**
-     * @param Polynomial $polynomial
+     * @param int $polynomial
      * @return self
      */
-    public function setPolynomial(Polynomial $polynomial): self
+    public function setPolynomial(int $polynomial): self
     {
         $this->polynomial = $polynomial;
         return $this;
     }
 
     /**
-     * @param Format $format
+     * @param string $format
      * @return self
      */
-    public function setFormat(Format $format): self
+    public function setFormat(string $format): self
     {
         $this->format = $format;
         return $this;
@@ -60,7 +58,7 @@ class CRC64
     private function generateTable(): void
     {
         $this->table = [];
-        $poly = $this->polynomial->toInt();
+        $poly = $this->polynomial;
 
         for ($n = 0; $n < 256; $n++) {
             $crc = Long::fromInt($n);
@@ -119,7 +117,7 @@ class CRC64
         return $this;
     }
 
-    #[Pure] public static function fromString(string $value): self
+    public static function fromString(string $value): self
     {
         /** @var int[] $bytes */
         $bytes = unpack('C*', $value);
@@ -132,6 +130,6 @@ class CRC64
 
     public function __toString(): string
     {
-        return sprintf($this->format->value, $this->value->toInt());
+        return sprintf($this->format, $this->value->toInt());
     }
 }
