@@ -37,13 +37,14 @@ class Long
      * @param $val
      * @return $this
      */
-    public function and($val): Long
+    public function and($val): self
     {
         $val = Long::getFromType($val);
+        $res = new Long();
         for ($i = 0; $i < self::$exp; $i++) {
-            $this->value[$i] &= $val->value[$i];
+            $res->value[$i] = $this->value[$i] && $val->value[$i];
         }
-        return $this;
+        return $res;
     }
 
     /**
@@ -52,13 +53,14 @@ class Long
      * @param $val
      * @return $this
      */
-    public function or($val): Long
+    public function or($val): self
     {
         $val = Long::getFromType($val);
+        $res = new Long();
         for ($i = 0; $i < self::$exp; $i++) {
-            $this->value[$i] |= $val->value[$i];
+            $res->value[$i] = $this->value[$i] || $val->value[$i];
         }
-        return $this;
+        return $res;
     }
 
     /**
@@ -67,13 +69,14 @@ class Long
      * @param $val
      * @return $this
      */
-    public function xor($val): Long
+    public function xor($val): self
     {
         $val = Long::getFromType($val);
+        $res = new Long();
         for ($i = 0; $i < self::$exp; $i++) {
-            $this->value[$i] = ($this->value[$i] xor $val->value[$i]);
+            $res->value[$i] = ($this->value[$i] xor $val->value[$i]);
         }
-        return $this;
+        return $res;
     }
 
     /**
@@ -83,19 +86,20 @@ class Long
      * @return $this
      * @throws InvalidArgumentException
      */
-    public function add($val): Long
+    public function add($val): self
     {
         $val = Long::getFromType($val);
+        $res = new Long();
         $carry = false;
         for ($i = 0; $i < self::$exp; $i++) {
             $n_carry = ($this->value[$i] && $val->value[$i])
                 || ($carry && $this->value[$i])
                 || ($carry && $val->value[$i]);
-            $this->value[$i] = ($this->value[$i] + $val->value[$i] + $carry) == 1
+            $res->value[$i] = ($this->value[$i] + $val->value[$i] + $carry) == 1
                 || (($this->value[$i] + $val->value[$i] + $carry) == 3);
             $carry = $n_carry;
         }
-        return $this;
+        return $res;
     }
 
     /**
@@ -103,7 +107,7 @@ class Long
      *
      * @throws InvalidArgumentException
      */
-    public function subtract($val): Long
+    public function subtract($val): self
     {
         $val = Long::getFromType($val)->inverse();
         return $this->add($val);
@@ -114,12 +118,13 @@ class Long
      *
      * @return $this
      */
-    public function invert(): Long
+    public function invert(): self
     {
+        $res = new Long();
         for ($i = 0; $i < self::$exp; $i++) {
-            $this->value[$i] = !$this->value[$i];
+            $res->value[$i] = !$this->value[$i];
         }
-        return $this;
+        return $res;
     }
 
     /**
@@ -127,10 +132,9 @@ class Long
      *
      * @throws InvalidArgumentException
      */
-    public function inverse(): Long
+    public function inverse(): self
     {
-        $this->invert();
-        return $this->add(1);
+        return $this->invert()->add(1);
     }
 
     /**
@@ -151,14 +155,15 @@ class Long
      * @param int $val
      * @return $this
      */
-    public function lshift(int $val): Long
+    public function lshift(int $val): self
     {
         $val = 0x3F & $val;
+        $res = new Long();
         for ($i = self::$exp - 1; $i >= 0; $i--) {
             $n = $i - $val;
-            $this->value[$i] = $n >= 0 && $this->value[$n];
+            $res->value[$i] = $n >= 0 && $this->value[$n];
         }
-        return $this;
+        return $res;
     }
 
     /**
@@ -167,14 +172,15 @@ class Long
      * @param int $val
      * @return $this
      */
-    public function rshift(int $val): Long
+    public function rshift(int $val): self
     {
         $val = 0x3F & $val;
+        $res = new Long();
         for ($i = 0; $i < self::$exp; $i++) {
             $n = $i + $val;
-            $this->value[$i] = $n <= self::$exp -1 && $this->value[$n];
+            $res->value[$i] = $n <= self::$exp - 1 && $this->value[$n];
         }
-        return $this;
+        return $res;
     }
 
     /**
@@ -196,7 +202,7 @@ class Long
         for ($i = 0; $i < sizeof($bin_val) && $i < self::$exp - 1; $i++) {
             $self->value[$i] = $bin_val[$i];
         }
-        if ($neg) $self->inverse();
+        if ($neg) return $self->inverse();
         return $self;
     }
 
@@ -211,9 +217,20 @@ class Long
     {
         $self = new static();
         foreach (str_split($val) as $char) {
-            $self->add(ord($char));
+            $self = $self->add(ord($char));
         }
         return $self;
+    }
+
+    /**
+     * Convert either string or integer value to Long
+     *
+     * @param $val
+     * @return static
+     */
+    public static function fromValue($val): self
+    {
+        return self::getFromType($val);
     }
 
     /**
@@ -223,13 +240,34 @@ class Long
      */
     protected static function getFromType($val): self
     {
-        if (is_int($val) || is_numeric($val)) return Long::fromInt(intval($val));
+        if (is_numeric($val)) {
+            $val = intval($val);
+        } elseif (is_string($val)
+            && (trim($val, '0..9A..Fa..f') == '' || trim($val, '0..9A..Fa..f') == 'x')) {
+            $val = hexdec($val);
+        }
+        if (is_int($val)) return Long::fromInt(intval($val));
         if (is_string($val)) return Long::fromString($val);
-        if ($val::class === 'Keyndin\Crc64\Long') return $val;
-        throw new InvalidArgumentException(sprintf(
-            'Unsupported Datatype conversion, expecting value to be of 
-            either `string`, `int` or `Keyndin\Crc64\Long`, received %s instead.',
-            $val::class));
+        if (gettype($val) === 'object' && $val::class === self::class) return $val;
+        throw new InvalidArgumentException(
+            sprintf(
+                'Unsupported Datatype conversion, expecting value to be of ' .
+                'either `string`, `int`, or `%s`, received `%s` instead.',
+                self::class,
+                gettype($val) != 'object' ? gettype($val) : $val::class
+            )
+        );
+    }
+
+    /**
+     * Return formatted Long number
+     *
+     * @param Format $format
+     * @return string
+     */
+    public function format(Format $format): string
+    {
+        return sprintf($format->value, $this->toInt());
     }
 
     /**
@@ -237,8 +275,8 @@ class Long
      *
      * @return string
      */
-    public function __toString()
+    public function __toString(): string
     {
-        return strval($this->toInt());
+        return $this->format(Format::INT);
     }
 }

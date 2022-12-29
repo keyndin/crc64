@@ -8,7 +8,19 @@ class CRC64Test extends TestCase
 {
     public function testFromString(): void
     {
-        $crc = CRC64::fromString("foobar")->convert()->setFormat(Format::HEX);
-        self::assertEquals("asdooo2", strval($crc));
+        self::assertEquals("6001682485122215966",
+            strval(
+                CRC64::fromString("foobar")
+                    ->convert()
+                    ->setFormat(Format::INT)
+            )
+        );
+        self::assertEquals("-2523457986391399615",
+            strval(
+                CRC64::fromString("myfancyaddress@mail.com")
+                    ->convert()
+                    ->setFormat(Format::INT)
+            )
+        );
     }
 }

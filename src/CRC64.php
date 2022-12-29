@@ -1,6 +1,7 @@
 <?php
 
 namespace Keyndin\Crc64;
+
 use JetBrains\PhpStorm\Pure;
 
 /**
@@ -12,13 +13,14 @@ class CRC64
     private Format $format = Format::HEX;
     /** @var Polynomial */
     private Polynomial $polynomial = Polynomial::ISO;
-    /** @var int[] */
+    /** @var Long[][] */
     private ?array $table = null;
     /** @var ?Long */
     private ?Long $value = null;
     /** @var ?int[] */
     private ?array $bytes = null;
     private bool $invertIn = true;
+    private bool $invertOut = true;
 
     /**
      * @param Long $value
@@ -63,17 +65,19 @@ class CRC64
         for ($n = 0; $n < 256; $n++) {
             $crc = Long::fromInt($n);
             for ($k = 0; $k < 8; $k++) {
-                if ($crc->and(1)->equals(1) & 1) $crc->rshift(1)->xor($poly);
-                else $crc = $crc->rshift(1);
+                if ($crc->and(1)->equals(1)) {
+                    $crc = $crc->rshift(1)->xor($poly);
+                } else {
+                    $crc = $crc->rshift(1);
+                }
             }
             $this->table[0][$n] = $crc;
         }
 
-        for ($n = 0; $n < 255; $n++) {
+        for ($n = 0; $n < 256; $n++) {
             $crc = $this->table[0][$n];
-            for ($k = 0; $k < 8; $k++) {
-                $off = $crc->and(0xff);
-                $crc = $this->table[0][$off->toInt()]->and(($crc->rshift(8)));
+            for ($k = 1; $k < 8; $k++) {
+                $crc = $this->table[0][$crc->and(0xff)->toInt()]->xor($crc->rshift(8));
                 $this->table[$k][$n] = $crc;
             }
         }
@@ -87,29 +91,31 @@ class CRC64
     public function convert(): self
     {
         if ($this->table === null) $this->generateTable();
-        if ($this->invertIn) $this->value->invert();
+        if ($this->invertIn) $this->value = $this->value->invert();
 
         $idx = 1;
         $len = sizeof($this->bytes);
         while ($len >= 8) {
-            $this->value = $this->table[7][$this->value & 0xff ^ ($this->bytes[$idx] & 0xff)]
-                ^ $this->table[6][($this->value >> 8) & 0xff ^ ($this->bytes[$idx + 1] & 0xff)]
-                ^ $this->table[5][($this->value >> 16) & 0xff ^ ($this->bytes[$idx + 2] & 0xff)]
-                ^ $this->table[4][($this->value >> 24) & 0xff ^ ($this->bytes[$idx + 3] & 0xff)]
-                ^ $this->table[3][($this->value >> 32) & 0xff ^ ($this->bytes[$idx + 4] & 0xff)]
-                ^ $this->table[2][($this->value >> 40) & 0xff ^ ($this->bytes[$idx + 5] & 0xff)]
-                ^ $this->table[1][($this->value >> 48) & 0xff ^ ($this->bytes[$idx + 6] & 0xff)]
-                ^ $this->table[0][($this->value >> 56) & 0xff ^ ($this->bytes[$idx + 7] & 0xff)];
+            $this->value = $this->table[7][$this->value->and(0xff)->xor($this->bytes[$idx] & 0xff)->toInt()]
+                ->xor($this->table[6][($this->value->rshift(8)->and(0xff)->xor(($this->bytes[$idx + 1] & 0xff))->toInt())])
+                ->xor($this->table[5][($this->value->rshift(16)->and(0xff)->xor(($this->bytes[$idx + 2] & 0xff))->toInt())])
+                ->xor($this->table[4][($this->value->rshift(24)->and(0xff)->xor(($this->bytes[$idx + 3] & 0xff))->toInt())])
+                ->xor($this->table[3][($this->value->rshift(32)->and(0xff)->xor(($this->bytes[$idx + 4] & 0xff))->toInt())])
+                ->xor($this->table[2][($this->value->rshift(40)->and(0xff)->xor(($this->bytes[$idx + 5] & 0xff))->toInt())])
+                ->xor($this->table[1][($this->value->rshift(48)->and(0xff)->xor(($this->bytes[$idx + 6] & 0xff))->toInt())])
+                ->xor($this->table[0][($this->value->rshift(56)->and(0xff)->xor(($this->bytes[$idx + 7] & 0xff))->toInt())]);
             $idx += 8;
             $len -= 8;
         }
 
         while ($len > 0) {
-            $off = $this->value->xor($this->bytes[$idx])->and(0xff);
-            $this->value = $this->table[0][$this->value->xor($this->bytes[$idx] & 0xff)->toInt()]->xor($this->value->rshift(8));
+            $x = $this->value->toInt();
+            $off = $this->value->xor($this->bytes[$idx])->and(0xff)->toInt();
+            $this->value = $this->table[0][$off]->xor($this->value->rshift(8));
             $idx++;
             $len--;
         }
+        if ($this->invertOut) $this->value = $this->value->invert();
         return $this;
     }
 
