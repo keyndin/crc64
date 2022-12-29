@@ -248,13 +248,13 @@ class Long
         }
         if (is_int($val)) return Long::fromInt(intval($val));
         if (is_string($val)) return Long::fromString($val);
-        if (gettype($val) === 'object' && $val::class === self::class) return $val;
+        if (gettype($val) === 'object' && get_class($val) === self::class) return $val;
         throw new InvalidArgumentException(
             sprintf(
                 'Unsupported Datatype conversion, expecting value to be of ' .
                 'either `string`, `int`, or `%s`, received `%s` instead.',
                 self::class,
-                gettype($val) != 'object' ? gettype($val) : $val::class
+                gettype($val) != 'object' ? gettype($val) : get_class($val)
             )
         );
     }

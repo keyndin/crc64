@@ -19,7 +19,9 @@ class CRC64
     private ?Long $value = null;
     /** @var ?int[] */
     private ?array $bytes = null;
+    /** @var bool */
     private bool $invertIn = true;
+    /** @var bool */
     private bool $invertOut = true;
 
     /**
