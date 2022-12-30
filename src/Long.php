@@ -4,6 +4,13 @@ namespace Keyndin\Crc64;
 
 use InvalidArgumentException;
 
+/**
+ * Java Long implementation in PHP, made to be compatible with
+ * Roman Nikitchenko & Michael Böckling's Java CRC64 implementation:
+ * https://github.com/MrBuddyCasino/crc-64
+ *
+ * @author Florian Lang <f.lang@mailbox.org
+ */
 class Long
 {
     private static int $exp = 64;
@@ -18,9 +25,9 @@ class Long
     }
 
     /**
-     * Return integer representation
+     * Return 64bit integer representation
+     *
      * @return int
-     * @throws InvalidArgumentException
      */
     public function toInt(): int
     {
@@ -29,6 +36,20 @@ class Long
             $val += ($this->value[$i] xor $this->value[self::$exp - 1]) << $i;
         }
         return $this->value[self::$exp - 1] ? -1 * ($val + 1) : $val;
+    }
+
+    /**
+     * Return 8bit integer representation
+     *
+     * @return int
+     */
+    public function toByte(): int
+    {
+        $val = 0;
+        for ($i = 0; $i < 7; $i++) {
+            $val += ($this->value[$i] xor $this->value[7]) << $i;
+        }
+        return $this->value[7] ? -1 * ($val + 1) : $val;
     }
 
     /**

@@ -2,10 +2,12 @@
 
 namespace Keyndin\Crc64;
 
-use JetBrains\PhpStorm\Pure;
-
 /**
- * Crc64 implementation in PHP
+ * Crc64 implementation in PHP, made to be compatible with
+ * Roman Nikitchenko & Michael Böckling's Java CRC64 implementation:
+ * https://github.com/MrBuddyCasino/crc-64
+ *
+ * @author Florian Lang <f.lang@mailbox.org
  */
 class CRC64
 {
@@ -55,6 +57,26 @@ class CRC64
     }
 
     /**
+     * @return int
+     */
+    public function getValue(): int
+    {
+        return $this->value->toInt();
+    }
+
+    /**
+     * @return int[]
+     */
+    public function getBytes(): array
+    {
+        $bytes = [];
+        for ($i = 0; $i < 8; $i++) {
+            $bytes[7 - $i] = $this->value->rshift($i * 8)->toByte();
+        }
+        return $bytes;
+    }
+
+    /**
      * Create nested table as described by Mark Adler:
      * http://stackoverflow.com/a/20579405/58962
      * @return void
@@ -90,7 +112,7 @@ class CRC64
      *
      * @return $this
      */
-    public function convert(): self
+    public function update(): self
     {
         if ($this->table === null) $this->generateTable();
         if ($this->invertIn) $this->value = $this->value->invert();
@@ -111,7 +133,6 @@ class CRC64
         }
 
         while ($len > 0) {
-            $x = $this->value->toInt();
             $off = $this->value->xor($this->bytes[$idx])->and(0xff)->toInt();
             $this->value = $this->table[0][$off]->xor($this->value->rshift(8));
             $idx++;
@@ -121,7 +142,7 @@ class CRC64
         return $this;
     }
 
-    #[Pure] public static function fromString(string $value): self
+    public static function fromString(string $value): self
     {
         /** @var int[] $bytes */
         $bytes = unpack('C*', $value);

@@ -9,7 +9,7 @@ This package should calculate the exact same hash values as the above-mentioned 
 
 ## Requirements
 
-* PHP >= 8.1
+* PHP >= 8.1 (64bit)
 * Composer
 * PHPUnit >= 9.5.27 (to run unittests)
 
@@ -26,7 +26,7 @@ use Keyndin\Crc64\Polynomial;
 $crc = CRC64::fromString("hashThisValue")
     ->setPolynomial(Polynomial::ISO)
     ->setFormat(Format::HEX_0)
-    ->convert();
+    ->update();
 
 echo $crc;
 // prints `0xf6dc92b5c5b4c6d1`
