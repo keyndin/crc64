@@ -7,7 +7,7 @@ namespace Keyndin\Crc64;
  * Roman Nikitchenko & Michael Böckling's Java CRC64 implementation:
  * https://github.com/MrBuddyCasino/crc-64
  *
- * @author Florian Lang <f.lang@mailbox.org
+ * @author Florian Lang <f.lang@mailbox.org>
  */
 class CRC64
 {
