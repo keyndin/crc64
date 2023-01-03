@@ -3,7 +3,11 @@
 namespace Keyndin\Crc64;
 
 /**
- * Crc64 implementation in PHP
+ * Crc64 implementation in PHP, made to be compatible with
+ * Roman Nikitchenko & Michael Böckling's Java CRC64 implementation:
+ * https://github.com/MrBuddyCasino/crc-64
+ *
+ * @author Florian Lang <f.lang@mailbox.org>
  */
 class CRC64
 {
@@ -33,7 +37,7 @@ class CRC64
     }
 
     /**
-     * @param int $polynomial
+     * @param string $polynomial
      * @return self
      */
     public function setPolynomial(string $polynomial): self
@@ -50,6 +54,26 @@ class CRC64
     {
         $this->format = $format;
         return $this;
+    }
+
+    /**
+     * @return int
+     */
+    public function getValue(): int
+    {
+        return $this->value->toInt();
+    }
+
+    /**
+     * @return int[]
+     */
+    public function getBytes(): array
+    {
+        $bytes = [];
+        for ($i = 0; $i < 8; $i++) {
+            $bytes[7 - $i] = $this->value->rshift($i * 8)->toByte();
+        }
+        return $bytes;
     }
 
     /**
@@ -88,13 +112,13 @@ class CRC64
      *
      * @return $this
      */
-    public function convert(): self
+    public function update(): self
     {
         if ($this->table === null) $this->generateTable();
         if ($this->invertIn) $this->value = $this->value->invert();
 
         $idx = 1;
-        $len = sizeof($this->bytes);
+        $len = count($this->bytes);
         while ($len >= 8) {
             $this->value = $this->table[7][$this->value->and(0xff)->xor($this->bytes[$idx] & 0xff)->toInt()]
                 ->xor($this->table[6][($this->value->rshift(8)->and(0xff)->xor(($this->bytes[$idx + 1] & 0xff))->toInt())])
@@ -126,7 +150,7 @@ class CRC64
         for ($i = 1; $i <= 4; $i++) {
             $val->lshift(8)->xor($bytes[$i] & 0xFF);
         }
-        return new static($val, $bytes);
+        return (new static($val, $bytes))->update();
     }
 
     public function __toString(): string

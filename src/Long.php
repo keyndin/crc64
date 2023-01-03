@@ -4,7 +4,14 @@ namespace Keyndin\Crc64;
 
 use InvalidArgumentException;
 
-final class Long
+/**
+ * Java Long implementation in PHP, made to be compatible with
+ * Roman Nikitchenko & Michael Böckling's Java CRC64 implementation:
+ * https://github.com/MrBuddyCasino/crc-64
+ *
+ * @author Florian Lang <f.lang@mailbox.org>
+ */
+class Long
 {
     private static $exp = 64;
     /* @var bool[] */
@@ -18,9 +25,9 @@ final class Long
     }
 
     /**
-     * Return integer representation
+     * Return 64bit integer representation
+     *
      * @return int
-     * @throws InvalidArgumentException
      */
     public function toInt(): int
     {
@@ -32,15 +39,29 @@ final class Long
     }
 
     /**
+     * Return 8bit integer representation
+     *
+     * @return int
+     */
+    public function toByte(): int
+    {
+        $val = 0;
+        for ($i = 0; $i < 7; $i++) {
+            $val += ($this->value[$i] xor $this->value[7]) << $i;
+        }
+        return $this->value[7] ? -1 * ($val + 1) : $val;
+    }
+
+    /**
      * Bitwise And operator
      *
      * @param $val
-     * @return $this
+     * @return self
      */
     public function and($val): self
     {
-        $val = Long::getFromType($val);
-        $res = new Long();
+        $val = self::getFromType($val);
+        $res = new self();
         for ($i = 0; $i < self::$exp; $i++) {
             $res->value[$i] = $this->value[$i] && $val->value[$i];
         }
@@ -51,12 +72,12 @@ final class Long
      * Bitwise Or operator
      *
      * @param $val
-     * @return $this
+     * @return self
      */
     public function or($val): self
     {
-        $val = Long::getFromType($val);
-        $res = new Long();
+        $val = self::getFromType($val);
+        $res = new self();
         for ($i = 0; $i < self::$exp; $i++) {
             $res->value[$i] = $this->value[$i] || $val->value[$i];
         }
@@ -67,12 +88,12 @@ final class Long
      * Bitwise Xor operator
      *
      * @param $val
-     * @return $this
+     * @return self
      */
     public function xor($val): self
     {
-        $val = Long::getFromType($val);
-        $res = new Long();
+        $val = self::getFromType($val);
+        $res = new self();
         for ($i = 0; $i < self::$exp; $i++) {
             $res->value[$i] = ($this->value[$i] xor $val->value[$i]);
         }
@@ -83,13 +104,13 @@ final class Long
      * Add a numeric value (either an integer, string or Long) to a Long
      *
      * @param $val
-     * @return $this
+     * @return self
      * @throws InvalidArgumentException
      */
     public function add($val): self
     {
-        $val = Long::getFromType($val);
-        $res = new Long();
+        $val = self::getFromType($val);
+        $res = new self();
         $carry = false;
         for ($i = 0; $i < self::$exp; $i++) {
             $n_carry = ($this->value[$i] && $val->value[$i])
@@ -109,18 +130,18 @@ final class Long
      */
     public function subtract($val): self
     {
-        $val = Long::getFromType($val)->inverse();
+        $val = self::getFromType($val)->inverse();
         return $this->add($val);
     }
 
     /**
      * Invert all bits
      *
-     * @return $this
+     * @return self
      */
     public function invert(): self
     {
-        $res = new Long();
+        $res = new self();
         for ($i = 0; $i < self::$exp; $i++) {
             $res->value[$i] = !$this->value[$i];
         }
@@ -153,12 +174,12 @@ final class Long
      * Bitwise left shift
      *
      * @param int $val
-     * @return $this
+     * @return self
      */
     public function lshift(int $val): self
     {
         $val = 0x3F & $val;
-        $res = new Long();
+        $res = new self();
         for ($i = self::$exp - 1; $i >= 0; $i--) {
             $n = $i - $val;
             $res->value[$i] = $n >= 0 && $this->value[$n];
@@ -170,12 +191,12 @@ final class Long
      * Bitwise right shift
      *
      * @param int $val
-     * @return $this
+     * @return self
      */
     public function rshift(int $val): self
     {
         $val = 0x3F & $val;
-        $res = new Long();
+        $res = new self();
         for ($i = 0; $i < self::$exp; $i++) {
             $n = $i + $val;
             $res->value[$i] = $n <= self::$exp - 1 && $this->value[$n];
@@ -195,11 +216,11 @@ final class Long
         $self = new static();
         $bin_val = [];
         $neg = $val < 0;
-        while ($val != 0) {
-            $bin_val[] = $val % 2 != 0;
+        while ($val !== 0) {
+            $bin_val[] = $val % 2 !== 0;
             $val = intdiv($val, 2);
         }
-        for ($i = 0; $i < sizeof($bin_val) && $i < self::$exp - 1; $i++) {
+        for ($i = 0; $i < count($bin_val) && $i < self::$exp - 1; $i++) {
             $self->value[$i] = $bin_val[$i];
         }
         if ($neg) return $self->inverse();
@@ -241,20 +262,20 @@ final class Long
     protected static function getFromType($val): self
     {
         if (is_numeric($val)) {
-            $val = intval($val);
+            $val = (int)$val;
         } elseif (is_string($val)
-            && (trim($val, '0..9A..Fa..f') == '' || trim($val, '0..9A..Fa..f') == 'x')) {
+            && (trim($val, '0..9A..Fa..f') === '' || trim($val, '0..9A..Fa..f') === 'x')) {
             $val = hexdec($val);
         }
-        if (is_int($val)) return Long::fromInt(intval($val));
-        if (is_string($val)) return Long::fromString($val);
-        if (gettype($val) === 'object' && get_class($val) === self::class) return $val;
+        if (is_int($val)) return self::fromInt((int)$val);
+        if (is_string($val)) return self::fromString($val);
+        if (is_object($val) && get_class($val) === self::class) return $val;
         throw new InvalidArgumentException(
             sprintf(
                 'Unsupported Datatype conversion, expecting value to be of ' .
                 'either `string`, `int`, or `%s`, received `%s` instead.',
                 self::class,
-                gettype($val) != 'object' ? gettype($val) : get_class($val)
+                !is_object($val) ? gettype($val) : get_class($val)
             )
         );
     }
