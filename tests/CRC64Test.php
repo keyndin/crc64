@@ -10,13 +10,11 @@ class CRC64Test extends TestCase
     {
         self::assertEquals(6001682485122215966,
             CRC64::fromString("foobar")
-                ->update()
                 ->setFormat(Format::INT)
                 ->getValue()
         );
         self::assertEquals(-2523457986391399615,
             CRC64::fromString("myfancyaddress@mail.com")
-                ->update()
                 ->setFormat(Format::INT)
                 ->getValue()
         );
@@ -26,7 +24,7 @@ class CRC64Test extends TestCase
     {
         self::assertEquals(
             4486629689757182440,
-            CRC64::fromString("testme")->update()->getValue()
+            CRC64::fromString("testme")->getValue()
         );
     }
 
@@ -34,11 +32,11 @@ class CRC64Test extends TestCase
     {
         self::assertEquals(
             [2, -33, -98, -106, 39, 46, 3, -49],
-            CRC64::fromString("Yet Another Test Value")->update()->getBytes()
+            CRC64::fromString("Yet Another Test Value")->getBytes()
         );
         self::assertEquals(
             [59, -12, 5, -52, -17, 91, 11, -7],
-            CRC64::fromString("Can You Hear Me Now?!")->update()->getBytes()
+            CRC64::fromString("Can You Hear Me Now?!")->getBytes()
         );
     }
 }

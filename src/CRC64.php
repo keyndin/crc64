@@ -118,7 +118,7 @@ class CRC64
         if ($this->invertIn) $this->value = $this->value->invert();
 
         $idx = 1;
-        $len = sizeof($this->bytes);
+        $len = count($this->bytes);
         while ($len >= 8) {
             $this->value = $this->table[7][$this->value->and(0xff)->xor($this->bytes[$idx] & 0xff)->toInt()]
                 ->xor($this->table[6][($this->value->rshift(8)->and(0xff)->xor(($this->bytes[$idx + 1] & 0xff))->toInt())])
@@ -150,7 +150,7 @@ class CRC64
         for ($i = 1; $i <= 4; $i++) {
             $val->lshift(8)->xor($bytes[$i] & 0xFF);
         }
-        return new static($val, $bytes);
+        return (new static($val, $bytes))->update();
     }
 
     public function __toString(): string

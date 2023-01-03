@@ -19,14 +19,15 @@ This package should calculate the exact same hash values as the above-mentioned 
 After installing the package via composer you can simply use it like this:
 
 ```php
+<?php
+
 use Keyndin\Crc64\CRC64;
 use Keyndin\Crc64\Format;
 use Keyndin\Crc64\Polynomial;
 
 $crc = CRC64::fromString("hashThisValue")
     ->setPolynomial(Polynomial::ISO)
-    ->setFormat(Format::HEX_0)
-    ->update();
+    ->setFormat(Format::HEX_0);
 
 echo $crc;
 // prints `0xf6dc92b5c5b4c6d1`
